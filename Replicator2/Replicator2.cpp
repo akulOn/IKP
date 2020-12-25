@@ -1,11 +1,32 @@
 // Replicator2.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
+#include <string.h>
+#include <stdio.h>
+
+#include <ReplicatorList.h>
+
+#define WIN32_LEAN_AND_MEAN
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    NODE* head = NULL;
+    //Init(&head);
+    PROCESS processAdd;
+
+    GUID Id;
+    SOCKET socket = NULL;
+
+    while (true)
+    {
+        CoCreateGuid(&Id);
+
+        processAdd = InitProcess(Id, socket);
+        PushBack(&head, processAdd);
+    }
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Replicator2", "Replicator2\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Process", "Process\Process.vcxproj", "{C14A8A26-6EFA-43E7-A160-0A58FBA8159A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxitems", "{2C758A43-CFBB-4B82-A675-D24020C07590}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,6 +43,14 @@ Global
 		{C14A8A26-6EFA-43E7-A160-0A58FBA8159A}.Release|x64.Build.0 = Release|x64
 		{C14A8A26-6EFA-43E7-A160-0A58FBA8159A}.Release|x86.ActiveCfg = Release|Win32
 		{C14A8A26-6EFA-43E7-A160-0A58FBA8159A}.Release|x86.Build.0 = Release|Win32
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Debug|x64.ActiveCfg = Debug|x64
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Debug|x64.Build.0 = Debug|x64
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Debug|x86.ActiveCfg = Debug|Win32
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Debug|x86.Build.0 = Debug|Win32
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Release|x64.ActiveCfg = Release|x64
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Release|x64.Build.0 = Release|x64
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Release|x86.ActiveCfg = Release|Win32
+		{F3F4088B-5DC4-44DF-849B-4DC9DD00122D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

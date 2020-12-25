@@ -1,11 +1,36 @@
 // Process.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
+#include <string.h>
+#include <stdio.h>
+#include <combaseapi.h>
+
+#include <ProcessList.h>
+
+#define WIN32_LEAN_AND_MEAN
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    NODE *head = NULL;
+    //Init(&head);
+    DATA dataAdd;
+
+    char data[100];
+    GUID Id;
+    CoCreateGuid(&Id);
+
+    while (true)
+    {
+        printf("Unesi neki podatak: ");
+        scanf("%s", &data);
+        
+        dataAdd = InitData(data);
+        PushBack(&head, dataAdd);
+
+        printf("Uneli ste: %s\n", data);
+    }
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
