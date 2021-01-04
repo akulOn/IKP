@@ -23,7 +23,6 @@ bool InitializeWindowsSockets();
 
 int main()
 {
-    bool registered = false;
     char messageBuffer[DEFAULT_BUFLEN];
 
     NODE_PROCESS* head;
@@ -95,23 +94,43 @@ int main()
         }
         if (i == 1)
         {
-            if (!registered) 
+            // Send an prepared message with null terminator included
+            iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
+
+            if (iResult == SOCKET_ERROR)
             {
-                // Send an prepared message with null terminator included
-                iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
+                printf("send failed with error: %d\n", WSAGetLastError());
+                closesocket(connectSocket);
+                WSACleanup();
+                return 1;
+            }
 
-                if (iResult == SOCKET_ERROR)
-                {
-                    printf("send failed with error: %d\n", WSAGetLastError());
-                    closesocket(connectSocket);
-                    WSACleanup();
-                    return 1;
-                }
+            //ovde primamo rezultat
 
+            FD_SET(connectSocket, &readfds);
+            timeval timeVal;
+            timeVal.tv_sec = 2;
+            timeVal.tv_usec = 0;
+            int result = select(0, &readfds, NULL, NULL, &timeVal);
+
+            if (result == 0)
+            {
+                // vreme za cekanje je isteklo
+            }
+            else if (result == SOCKET_ERROR)
+            {
+                //desila se greska prilikom poziva funkcije
+            }
+            else if (FD_ISSET(connectSocket, &readfds))
+            {
+                // rezultat je jednak broju soketa koji su zadovoljili uslov
                 iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
                 if (iResult > 0)
                 {
-                    printf("%s\n", messageBuffer);
+                    if (messageBuffer[0] == '1')
+                        printf("Registered successfully.\n");
+                    else
+                        printf("This process is registered already.\n");
                 }
                 else if (iResult == 0)
                 {
@@ -125,13 +144,9 @@ int main()
                     printf("recv failed with error: %d\n", WSAGetLastError());
                     closesocket(connectSocket);
                 }
-
-                registered = false; // true
             }
-            else 
-            {
-                printf("This process is registered already.\n");
-            }   
+
+            FD_CLR(connectSocket, &readfds);
         }
         else if (i == 2)
         {
