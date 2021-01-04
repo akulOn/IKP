@@ -24,9 +24,10 @@ bool InitializeWindowsSockets();
 int main()
 {
     bool registered = false;
-    NODE *head = NULL;
-    DATA dataAdd;
-    char data[100];
+    char messageBuffer[DEFAULT_BUFLEN];
+
+    NODE_PROCESS* head;
+    InitProcessList(&head);
 
 #pragma region connectRegion
     // socket used to communicate with server
@@ -107,7 +108,25 @@ int main()
                     return 1;
                 }
 
-                registered = true;
+                iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
+                if (iResult > 0)
+                {
+                    printf("%s\n", messageBuffer);
+                }
+                else if (iResult == 0)
+                {
+                    // connection was closed gracefully
+                    printf("Connection with client closed.\n");
+                    closesocket(connectSocket);
+                }
+                else
+                {
+                    // there was an error during recv
+                    printf("recv failed with error: %d\n", WSAGetLastError());
+                    closesocket(connectSocket);
+                }
+
+                registered = false; // true
             }
             else 
             {

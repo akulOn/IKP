@@ -4,29 +4,76 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Windows.h>
 
-void Init(NODE** head)
+#define GUID_FORMAT "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX"
+#define GUID_ARG(guid) guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
+
+CRITICAL_SECTION csReplicator;
+bool Contains(NODE_REPLICATOR** head, PROCESS process);
+
+void InitReplicatorList(NODE_REPLICATOR** head)
 {
+	InitializeCriticalSection(&csReplicator);
+	EnterCriticalSection(&csReplicator);
 	*head = NULL;
+	LeaveCriticalSection(&csReplicator);
 }
 
-void PushBack(NODE** head, PROCESS process)
+bool PushBack(NODE_REPLICATOR** head, PROCESS process)
 {
-	NODE* tempNode = *head;
-	NODE* newNode = (NODE*)malloc(sizeof(NODE));
+	if (Contains(head, process))
+		return false;
+
+	NODE_REPLICATOR* tempNode = *head;
+	NODE_REPLICATOR* newNode = (NODE_REPLICATOR*)malloc(sizeof(NODE_REPLICATOR));
 	newNode->process = process;
 	newNode->next = NULL;
 
-	if (tempNode == NULL) //dodajemo prvi element
+	if (tempNode == NULL) // dodajemo prvi element
 	{
+		EnterCriticalSection(&csReplicator);
 		*head = newNode;
-		return;
+		LeaveCriticalSection(&csReplicator);
+		return true;
 	}
-	while (tempNode->next != NULL)	//dodajemo na kraj
+	while (tempNode->next != NULL)	// dodajemo na kraj
 	{
 		tempNode = tempNode->next;
 	}
+	EnterCriticalSection(&csReplicator);
 	tempNode->next = newNode;
+	LeaveCriticalSection(&csReplicator);
+
+	return true;
+}
+
+void PrintAllProcesses(NODE_REPLICATOR** head)
+{
+	NODE_REPLICATOR* tempNode = *head;
+
+	printf("\nAll processes:\n");
+	while (tempNode != NULL)
+	{
+		printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(tempNode->process.processId));
+
+		tempNode = tempNode->next;
+	}
+	printf("\n");
+}
+
+bool Contains(NODE_REPLICATOR** head, PROCESS process)
+{
+	NODE_REPLICATOR* tempNode = *head;
+
+	while (tempNode != NULL)
+	{
+		if (tempNode->process.processId == process.processId)
+			return true;
+
+		tempNode = tempNode->next;
+	}
+	return false;
 }
 
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket)

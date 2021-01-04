@@ -13,7 +13,7 @@
 
 int main()
 {
-    NODE* head = NULL;
+    NODE_REPLICATOR* head = NULL;
     //Init(&head);
     PROCESS processAdd;
 

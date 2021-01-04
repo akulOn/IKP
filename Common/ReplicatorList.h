@@ -11,14 +11,16 @@ typedef struct process_st
 	SOCKET acceptedSocket;
 }PROCESS;
 
-typedef struct node_st
+typedef struct node_st_replicator
 {
 	PROCESS process;
-	struct node_st* next;
-}NODE;
+	struct node_st_replicator* next;
+}NODE_REPLICATOR;
 
-void Init(NODE** head);
+void InitReplicatorList(NODE_REPLICATOR** head);
 
-void PushBack(NODE** head, PROCESS process);
+bool PushBack(NODE_REPLICATOR** head, PROCESS process);
+
+void PrintAllProcesses(NODE_REPLICATOR** head);
 
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket);

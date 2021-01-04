@@ -19,10 +19,12 @@
 
 bool InitializeWindowsSockets();
 DWORD WINAPI handleSocket(LPVOID lpParam);
-NODE* head = NULL;
+NODE_REPLICATOR* head;
 
 int main()
 {
+    InitReplicatorList(&head);
+
     while (true)
     {
 #pragma region connectRegion
@@ -176,8 +178,28 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
         {
             if (recvbuf[0] == 1)    //PUSH PROCESS
             {
-                PushBack(&head, *process);
-                printf("New proccess added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+                if (PushBack(&head, *process))
+                {
+                    printf("New process added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+                    strcpy(recvbuf, "1");
+                }
+                else
+                {
+                    printf("This process is registered already.\n");
+                    strcpy(recvbuf, "0");
+                }
+
+                iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+                if (iResult == SOCKET_ERROR)
+                {
+                    printf("send failed with error: %d\n", WSAGetLastError());
+                    closesocket(acceptedSocket);
+                    WSACleanup();
+                    return 1;
+                }
+
+                PrintAllProcesses(&head);
             }
             else if (recvbuf[0] == 2)   //PUSH DATA
             {
