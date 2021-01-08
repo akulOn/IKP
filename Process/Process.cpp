@@ -20,6 +20,8 @@
 #define DEFAULT_PORT 27016
 
 bool InitializeWindowsSockets();
+void RegisterProcess(SOCKET connectSocket, int i);
+void SendData(SOCKET connectSocket, int i);
 
 int main()
 {
@@ -94,63 +96,11 @@ int main()
         }
         if (i == 1)
         {
-            // Send an prepared message with null terminator included
-            iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
-
-            if (iResult == SOCKET_ERROR)
-            {
-                printf("send failed with error: %d\n", WSAGetLastError());
-                closesocket(connectSocket);
-                WSACleanup();
-                return 1;
-            }
-
-            //ovde primamo rezultat
-
-            FD_SET(connectSocket, &readfds);
-            timeval timeVal;
-            timeVal.tv_sec = 2;
-            timeVal.tv_usec = 0;
-            int result = select(0, &readfds, NULL, NULL, &timeVal);
-
-            if (result == 0)
-            {
-                // vreme za cekanje je isteklo
-            }
-            else if (result == SOCKET_ERROR)
-            {
-                //desila se greska prilikom poziva funkcije
-            }
-            else if (FD_ISSET(connectSocket, &readfds))
-            {
-                // rezultat je jednak broju soketa koji su zadovoljili uslov
-                iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
-                if (iResult > 0)
-                {
-                    if (messageBuffer[0] == '1')
-                        printf("Registered successfully.\n");
-                    else
-                        printf("This process is registered already.\n");
-                }
-                else if (iResult == 0)
-                {
-                    // connection was closed gracefully
-                    printf("Connection with client closed.\n");
-                    closesocket(connectSocket);
-                }
-                else
-                {
-                    // there was an error during recv
-                    printf("recv failed with error: %d\n", WSAGetLastError());
-                    closesocket(connectSocket);
-                }
-            }
-
-            FD_CLR(connectSocket, &readfds);
+            RegisterProcess(connectSocket, i);
         }
         else if (i == 2)
         {
-            printf("This function is not implemented yet.\n");
+            SendData(connectSocket, i);
         }
     }
 
@@ -172,6 +122,131 @@ bool InitializeWindowsSockets()
     }
     return true;
 }
+
+void RegisterProcess(SOCKET connectSocket, int i)
+{
+    char messageBuffer[DEFAULT_BUFLEN];
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+
+    // Send an prepared message with null terminator included
+    int iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
+
+    if (iResult == SOCKET_ERROR)
+    {
+        printf("send failed with error: %d\n", WSAGetLastError());
+        closesocket(connectSocket);
+        WSACleanup();
+        return;
+    }
+
+    //ovde primamo rezultat
+
+    FD_SET(connectSocket, &readfds);
+    timeval timeVal;
+    timeVal.tv_sec = 2;
+    timeVal.tv_usec = 0;
+    int result = select(0, &readfds, NULL, NULL, &timeVal);
+
+    if (result == 0)
+    {
+        // vreme za cekanje je isteklo
+    }
+    else if (result == SOCKET_ERROR)
+    {
+        //desila se greska prilikom poziva funkcije
+    }
+    else if (FD_ISSET(connectSocket, &readfds))
+    {
+        // rezultat je jednak broju soketa koji su zadovoljili uslov
+        iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
+        if (iResult > 0)
+        {
+            if (messageBuffer[0] == '1')
+                printf("Registered successfully.\n");
+            else
+                printf("This process is registered already.\n");
+        }
+        else if (iResult == 0)
+        {
+            // connection was closed gracefully
+            printf("Connection with client closed.\n");
+            closesocket(connectSocket);
+        }
+        else
+        {
+            // there was an error during recv
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(connectSocket);
+        }
+    }
+
+    FD_CLR(connectSocket, &readfds);
+}
+
+void SendData(SOCKET connectSocket, int i)
+{
+    char messageBuffer[DEFAULT_BUFLEN];
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+
+    // Send an prepared message with null terminator included
+    int iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
+
+    if (iResult == SOCKET_ERROR)
+    {
+        printf("send failed with error: %d\n", WSAGetLastError());
+        closesocket(connectSocket);
+        WSACleanup();
+        return;
+    }
+
+    //ovde primamo rezultat
+
+    FD_SET(connectSocket, &readfds);
+    timeval timeVal;
+    timeVal.tv_sec = 2;
+    timeVal.tv_usec = 0;
+    int result = select(0, &readfds, NULL, NULL, &timeVal);
+
+    if (result == 0)
+    {
+        // vreme za cekanje je isteklo
+    }
+    else if (result == SOCKET_ERROR)
+    {
+        //desila se greska prilikom poziva funkcije
+    }
+    else if (FD_ISSET(connectSocket, &readfds))
+    {
+        // rezultat je jednak broju soketa koji su zadovoljili uslov
+        iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
+        if (iResult > 0)
+        {
+            if (messageBuffer[0] == '1')
+                printf("Data saved successfully.\n"); // tu treba dodati logiku za slanje poruke
+            else
+                printf("Data wasn't saved successfully.\n");
+        }
+        else if (iResult == 0)
+        {
+            // connection was closed gracefully
+            printf("Connection with client closed.\n");
+            closesocket(connectSocket);
+        }
+        else
+        {
+            // there was an error during recv
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(connectSocket);
+        }
+    }
+
+    FD_CLR(connectSocket, &readfds);
+}
+
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu

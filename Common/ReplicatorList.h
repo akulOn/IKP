@@ -23,4 +23,6 @@ bool PushBack(NODE_REPLICATOR** head, PROCESS process);
 
 void PrintAllProcesses(NODE_REPLICATOR** head);
 
+bool Contains(NODE_REPLICATOR** head, PROCESS process);
+
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket);

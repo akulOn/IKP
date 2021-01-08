@@ -2,6 +2,7 @@
 //
 
 #define _CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 
 #include <iostream>
@@ -14,13 +15,15 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27016"
+#define DEFAULT_PORT_R1 "27016"
+#define DEFAULT_PORT_R2 27017
 #define GUID_FORMAT "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX"
 #define GUID_ARG(guid) guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 
 bool InitializeWindowsSockets();
 DWORD WINAPI handleSocket(LPVOID lpParam);
 NODE_REPLICATOR* head;
+SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
@@ -28,7 +31,7 @@ int main()
 
     while (true)
     {
-#pragma region connectRegion
+#pragma region listenRegion
 
         // Socket used for listening for new clients 
         SOCKET listenSocket = INVALID_SOCKET;
@@ -42,7 +45,7 @@ int main()
         // variable used to store function return value
         int iResult;
         // Buffer used for storing incoming data
-        //char recvbuf[DEFAULT_BUFLEN];
+        char recvbuf[DEFAULT_BUFLEN];
 
         if (InitializeWindowsSockets() == false)
         {
@@ -62,7 +65,7 @@ int main()
         hints.ai_flags = AI_PASSIVE;     // 
 
         // Resolve the server address and port
-        iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &resultingAddress);
+        iResult = getaddrinfo(NULL, DEFAULT_PORT_R1, &hints, &resultingAddress);
         if (iResult != 0)
         {
             printf("getaddrinfo failed with error: %d\n", iResult);
@@ -108,10 +111,63 @@ int main()
             return 1;
         }
 
-#pragma endregion connectRegion
+#pragma endregion
 
         printf("Server initialized, waiting for clients.\n");
         int numberOfClients = 0;
+
+        replicatorSocket = accept(listenSocket, NULL, NULL);
+
+        if (replicatorSocket == INVALID_SOCKET)
+        {
+            printf("accept failed with error: %d\n", WSAGetLastError());
+            closesocket(listenSocket);
+            WSACleanup();
+            return 1;
+        }
+        else
+        {
+#pragma region connectToReplicator1AsClientRegion
+            // socket used to communicate with server
+            SOCKET connectSocket = INVALID_SOCKET;
+            // variable used to store function return value
+            //int iResult;
+            // message to send
+            //char* messageToSend = "";
+
+            if (InitializeWindowsSockets() == false)
+            {
+                // we won't log anything since it will be logged
+                // by InitializeWindowsSockets() function
+                return 1;
+            }
+
+            // create a socket
+            connectSocket = socket(AF_INET,
+                SOCK_STREAM,
+                IPPROTO_TCP);
+
+            if (connectSocket == INVALID_SOCKET)
+            {
+                printf("socket failed with error: %ld\n", WSAGetLastError());
+                WSACleanup();
+                return 1;
+            }
+
+            // create and initialize address structure
+            sockaddr_in serverAddress;
+            serverAddress.sin_family = AF_INET;
+            serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+            serverAddress.sin_port = htons(DEFAULT_PORT_R2);
+            // connect to server specified in serverAddress and socket connectSocket
+            if (connect(connectSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR)
+            {
+                printf("Unable to connect to server.\n");
+                closesocket(connectSocket);
+            }
+#pragma endregion
+            printf("Connection with Replicator2 established.\n");
+        }
 
         do
         {
@@ -186,7 +242,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
                 }
                 else
                 {
-                    printf("This process is registered already.\n");
+                    printf("Process: ID: {" GUID_FORMAT "} is already registered.\n", GUID_ARG(process->processId));
                     strcpy(recvbuf, "0");
                 }
 
@@ -204,7 +260,26 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
             }
             else if (recvbuf[0] == 2)   //PUSH DATA
             {
-                
+                if (Contains(&head, *process))
+                {
+                    printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+                    strcpy(recvbuf, "1");
+                }
+                else
+                {
+                    printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
+                    strcpy(recvbuf, "0");
+                }
+
+                iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+                if (iResult == SOCKET_ERROR)
+                {
+                    printf("send failed with error: %d\n", WSAGetLastError());
+                    closesocket(acceptedSocket);
+                    WSACleanup();
+                    return 1;
+                }
             }
         }
         else if (iResult == 0)
