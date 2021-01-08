@@ -21,11 +21,12 @@
 
 bool InitializeWindowsSockets();
 void RegisterProcess(SOCKET connectSocket, int i);
-void SendData(SOCKET connectSocket, int i);
+void SendData(SOCKET connectSocket, char* i);
 
 int main()
 {
     char messageBuffer[DEFAULT_BUFLEN];
+    char message[DEFAULT_BUFLEN];
 
     NODE_PROCESS* head;
     InitProcessList(&head);
@@ -100,7 +101,10 @@ int main()
         }
         else if (i == 2)
         {
-            SendData(connectSocket, i);
+            message[0] = '2';
+            printf("Please input text: ");
+            scanf("%s", &message[1]);
+            SendData(connectSocket, message);
         }
     }
 
@@ -185,7 +189,7 @@ void RegisterProcess(SOCKET connectSocket, int i)
     FD_CLR(connectSocket, &readfds);
 }
 
-void SendData(SOCKET connectSocket, int i)
+void SendData(SOCKET connectSocket, char* i)
 {
     char messageBuffer[DEFAULT_BUFLEN];
 
@@ -193,7 +197,7 @@ void SendData(SOCKET connectSocket, int i)
     FD_ZERO(&readfds);
 
     // Send an prepared message with null terminator included
-    int iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
+    int iResult = send(connectSocket, i, (int)strlen(i), 0);
 
     if (iResult == SOCKET_ERROR)
     {
@@ -245,6 +249,20 @@ void SendData(SOCKET connectSocket, int i)
     }
 
     FD_CLR(connectSocket, &readfds);
+}
+
+std::string guidToString(GUID guid) {
+    char output[40];
+    snprintf(output, 40, "{%08X-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}", guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    return output;
+}
+
+GUID stringToGUID(const std::string& guid) {
+    GUID output;
+    const auto ret = sscanf(guid.c_str(), "{%8X-%4hX-%4hX-%2hX%2hX-%2hX%2hX%2hX%2hX%2hX%2hX}", &output.Data1, &output.Data2, &output.Data3, &output.Data4[0], &output.Data4[1], &output.Data4[2], &output.Data4[3], &output.Data4[4], &output.Data4[5], &output.Data4[6], &output.Data4[7]);
+    if (ret != 11)
+        throw std::logic_error("Invalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
+    return output;
 }
 
 

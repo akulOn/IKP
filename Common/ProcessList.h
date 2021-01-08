@@ -19,7 +19,7 @@ typedef struct node_st_process
 
 void InitProcessList(NODE_PROCESS** head);
 
-void PushBack(NODE_PROCESS** head, DATA data);
+void PushProcess(NODE_PROCESS** head, DATA data);
 
 DATA PopFront(NODE_PROCESS** head);
 

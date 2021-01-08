@@ -16,7 +16,7 @@ void InitProcessList(NODE_PROCESS**head)
 	LeaveCriticalSection(&csProcess);
 }
 
-void PushBack(NODE_PROCESS** head, DATA data)
+void PushProcess(NODE_PROCESS** head, DATA data)
 {
 	NODE_PROCESS* tempNode = *head;
 	NODE_PROCESS* newNode = (NODE_PROCESS*)malloc(sizeof(NODE_PROCESS));

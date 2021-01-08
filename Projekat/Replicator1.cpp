@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <winsock.h>
 #include "..\Common\ReplicatorList.h"
+#include "..\Common\ProcessList.h"
 #pragma comment(lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
@@ -23,11 +24,13 @@
 bool InitializeWindowsSockets();
 DWORD WINAPI handleSocket(LPVOID lpParam);
 NODE_REPLICATOR* head;
+NODE_PROCESS* headProcess;
 SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
     InitReplicatorList(&head);
+    InitProcessList(&headProcess);
 
     while (true)
     {
@@ -258,10 +261,14 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 
                 PrintAllProcesses(&head);
             }
-            else if (recvbuf[0] == 2)   //PUSH DATA
+            else if (recvbuf[0] == '2')   //PUSH DATA
             {
                 if (Contains(&head, *process))
                 {
+                    recvbuf[iResult] = '\0';
+                    DATA data = InitData(&recvbuf[1]);
+                    PushProcess(&headProcess, data);
+                    printf("Message received from process: %s.\n", &recvbuf[1]);
                     printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
                     strcpy(recvbuf, "1");
                 }
