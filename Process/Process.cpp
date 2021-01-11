@@ -1,5 +1,3 @@
-// Process.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
@@ -33,6 +31,7 @@ int main()
 
     NODE_PROCESS* head;
     InitProcessList(&head);
+    bool dataSent = false;
 
 #pragma region connectRegion
     // socket used to communicate with server
@@ -86,29 +85,53 @@ int main()
 
     while (true)
     {
-        puts("MAIN MENU: ");
-        puts("0. Exit.");
-        puts("1. Register process.");
-        puts("2. Send data.");
-
+        if (!dataSent) {
+            puts("MAIN MENU: ");
+            puts("0. Exit.");
+            puts("1. Register process.");
+            puts("2. Send data.");
+        }
+        
+        char line[256];
         int i;
-        scanf_s("%d", &i);
-
-        if (i == 0)
+        if (fgets(line, sizeof(line), stdin)) 
         {
-            puts("Client is shuting down...");
-            break;
-        }
-        if (i == 1)
-        {
-            RegisterProcess(connectSocket, i);
-        }
-        else if (i == 2)
-        {
-            message[0] = '2';
-            printf("Please input text: ");
-            scanf("%s", &message[1]);
-            SendData(connectSocket, message);
+            if (1 == sscanf(line, "%d", &i)) 
+            {
+                /* Now 'i' can be safely used */
+                if (i == 0)
+                {
+                    puts("Client is shuting down...");
+                    break;
+                }
+                else if (i == 1)
+                {
+                    RegisterProcess(connectSocket, i);
+                }
+                else if (i == 2)
+                {
+                    message[0] = '2';
+                    printf("Please input text: ");
+                    scanf("%s", &message[1]);
+                    SendData(connectSocket, message);
+                    dataSent = true;
+                }
+                else
+                {
+                    printf("Invalid input.\n");
+                }
+            }
+            else
+            {
+                if (dataSent)
+                {
+                    dataSent = false;
+                }
+                else
+                {
+                    printf("Invalid input.\n");
+                }
+            }
         }
     }
 
@@ -273,14 +296,3 @@ GUID stringToGUID(const std::string& guid) {
         throw std::logic_error("Unvalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
     return output;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

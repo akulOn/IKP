@@ -1,6 +1,3 @@
-// Replicator2.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
@@ -12,6 +9,7 @@
 #include <stdio.h>
 #include <winsock.h>
 #include "..\Common\ReplicatorList.h"
+#include "..\Common\ProcessList.h"
 #pragma comment(lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
@@ -28,11 +26,13 @@ char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
 
 NODE_REPLICATOR* head;
+NODE_PROCESS* headProcess;
 SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
 	InitReplicatorList(&head);
+	InitProcessList(&headProcess);
 
 #pragma region listenRegion
 
@@ -160,7 +160,7 @@ int main()
 
 #pragma endregion 
 
-	printf("Server initialized, waiting for clients.\n");
+	printf("Waiting connection with Replicator1...\n");
 	int numberOfClients = 0;
 
 	replicatorSocket = accept(listenSocket, NULL, NULL);
@@ -175,6 +175,7 @@ int main()
 	else
 	{
 		printf("Connection with Replicator1 established.\n");
+		printf("Server initialized, waiting for clients.\n");
 	}
 
 	do
@@ -295,10 +296,14 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 
 				PrintAllProcesses(&head);
 			}
-			else if (recvbuf[0] == 2)   //PUSH DATA
+			else if (recvbuf[0] == '2')   //PUSH DATA
 			{
 				if (Contains(&head, *process))
 				{
+					recvbuf[iResult] = '\0';
+					DATA data = InitData(&recvbuf[1]);
+					PushProcess(&headProcess, data);
+					printf("Message received from process: %s.\n", &recvbuf[1]);
 					printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 					strcpy(recvbuf, "1");
 				}
@@ -409,14 +414,3 @@ GUID stringToGUID(const std::string& guid) {
 		throw std::logic_error("Unvalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
 	return output;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
