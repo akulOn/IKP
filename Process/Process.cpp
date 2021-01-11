@@ -23,6 +23,9 @@ bool InitializeWindowsSockets();
 void RegisterProcess(SOCKET connectSocket, int i);
 void SendData(SOCKET connectSocket, char* i);
 
+char* guidToString(const GUID* id, char* out);
+GUID stringToGUID(const std::string& guid);
+
 int main()
 {
     char messageBuffer[DEFAULT_BUFLEN];
@@ -71,6 +74,8 @@ int main()
         WSACleanup();
     }
 
+#pragma endregion 
+
     unsigned long mode = 1; //non-blocking mode
     iResult = ioctlsocket(connectSocket, FIONBIO, &mode);
     if (iResult != NO_ERROR)
@@ -78,7 +83,6 @@ int main()
 
     fd_set readfds;
     FD_ZERO(&readfds);
-#pragma endregion connectRegion
 
     while (true)
     {
@@ -251,20 +255,24 @@ void SendData(SOCKET connectSocket, char* i)
     FD_CLR(connectSocket, &readfds);
 }
 
-std::string guidToString(GUID guid) {
-    char output[40];
-    snprintf(output, 40, "{%08X-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}", guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-    return output;
+char* guidToString(const GUID* id, char* out) {
+    int i;
+    char* ret = out;
+    out += sprintf(out, "%.8lX-%.4hX-%.4hX-", id->Data1, id->Data2, id->Data3);
+    for (i = 0; i < sizeof(id->Data4); ++i) {
+        out += sprintf(out, "%.2hhX", id->Data4[i]);
+        if (i == 1) *(out++) = '-';
+    }
+    return ret;
 }
 
 GUID stringToGUID(const std::string& guid) {
     GUID output;
-    const auto ret = sscanf(guid.c_str(), "{%8X-%4hX-%4hX-%2hX%2hX-%2hX%2hX%2hX%2hX%2hX%2hX}", &output.Data1, &output.Data2, &output.Data3, &output.Data4[0], &output.Data4[1], &output.Data4[2], &output.Data4[3], &output.Data4[4], &output.Data4[5], &output.Data4[6], &output.Data4[7]);
+    const auto ret = sscanf(guid.c_str(), "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX", &output.Data1, &output.Data2, &output.Data3, &output.Data4[0], &output.Data4[1], &output.Data4[2], &output.Data4[3], &output.Data4[4], &output.Data4[5], &output.Data4[6], &output.Data4[7]);
     if (ret != 11)
-        throw std::logic_error("Invalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
+        throw std::logic_error("Unvalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
     return output;
 }
-
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
