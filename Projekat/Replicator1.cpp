@@ -201,8 +201,6 @@ int main()
 		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId[numberOfClients]);
 		numberOfClients++;
 
-		//OVDE DODATI LOGIKU ZA SLANJE INFORMACIJE O REGISTROVANOM PROCESU NA DRUGI REPLIKATOR
-
 	} while (1);
 
 	closesocket(listenSocket);
@@ -324,6 +322,18 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 						PushProcess(&headProcess, data);
 						printf("Message received from process: %s.\n", &recvbuf[1]);
 						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+
+						recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci
+						iResult = send(replicatorSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+						if (iResult == SOCKET_ERROR)
+						{
+							printf("send failed with error: %d\n", WSAGetLastError());
+							closesocket(replicatorSocket);
+							WSACleanup();
+							return 1;
+						}
+
 						strcpy(recvbuf, "1");
 					}
 					else

@@ -203,8 +203,6 @@ int main()
 		CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId);
 		numberOfClients++;
 
-		//OVDE DODATI LOGIKU ZA SLANJE INFORMACIJE O REGISTROVANOM PROCESU NA DRUGI REPLIKATOR
-
 	} while (1);
 
 	closesocket(listenSocket);
@@ -373,8 +371,18 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 			iResult = recv(*acceptedSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0)
 			{
-				GUID id = stringToGUID(recvbuf);
-				printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+				if (recvbuf[0] == '+') 
+				{
+					DATA data = InitData(&recvbuf[1]);
+					PushProcess(&headProcess, data);
+					printf("Message received from Replicator1: %s.\n", &recvbuf[1]);
+					//printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+				}
+				else 
+				{
+					GUID id = stringToGUID(recvbuf);
+					printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+				}
 			}
 			else if (iResult == 0)
 			{
