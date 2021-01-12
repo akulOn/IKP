@@ -280,6 +280,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 				{
 					if (PushBack(&head, *process))
 					{
+						puts("__________________________________________________________________________________");
 						printf("New process added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 						strcpy(recvbuf, "1");
 
@@ -297,6 +298,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 					}
 					else
 					{
+						puts("__________________________________________________________________________________");
 						printf("Process: ID: {" GUID_FORMAT "} is already registered.\n", GUID_ARG(process->processId));
 						strcpy(recvbuf, "0");
 					}
@@ -320,6 +322,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 						recvbuf[iResult] = '\0';
 						DATA data = InitData(&recvbuf[1]);
 						PushProcess(&headProcess, data);
+						puts("__________________________________________________________________________________");
 						printf("Message received from process: %s.\n", &recvbuf[1]);
 						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 
@@ -338,6 +341,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 					}
 					else
 					{
+						puts("__________________________________________________________________________________");
 						printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
 						strcpy(recvbuf, "0");
 					}
@@ -356,6 +360,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 			else if (iResult == 0)
 			{
 				// connection was closed gracefully
+				puts("__________________________________________________________________________________");
 				printf("Connection with process(ID: {" GUID_FORMAT "}) closed.\n", GUID_ARG(process->processId));
 				closesocket(acceptedSocket);
 				break;
@@ -406,12 +411,14 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 			if (iResult > 0)
 			{
 				GUID id = stringToGUID(recvbuf);
-				printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+				puts("__________________________________________________________________________________");
+				printf("Process registered on Replicator2, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
 			}
 			else if (iResult == 0)
 			{
 				// connection was closed gracefully
-				printf("Connection with client closed.\n");
+				puts("__________________________________________________________________________________");
+				printf("Connection with Replicator2 closed.\n");
 				closesocket(*acceptedSocket);
 			}
 			else

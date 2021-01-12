@@ -15,7 +15,8 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT 27016
+#define DEFAULT_PORT_R1 27016
+#define DEFAULT_PORT_R2 27017
 
 bool InitializeWindowsSockets();
 void RegisterProcess(SOCKET connectSocket, int i);
@@ -24,8 +25,24 @@ void SendData(SOCKET connectSocket, char* i);
 char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
 
-int main()
+int main(int argc, char* argv[])
 {
+    int serverPort = DEFAULT_PORT_R1;
+    
+    if (argc > 1)
+    {
+        char* arg = (char*)argv[1];
+        if (strcmp("27017", arg) == 0)
+        {
+            printf("Connected to the Replicator2!\n");
+            serverPort = DEFAULT_PORT_R2;
+        }
+    }
+    else 
+    {
+        printf("Connected to the Replicator1!\n");
+    }
+  
     char messageBuffer[DEFAULT_BUFLEN];
     char message[DEFAULT_BUFLEN];
 
@@ -64,7 +81,7 @@ int main()
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serverAddress.sin_port = htons(DEFAULT_PORT);
+    serverAddress.sin_port = htons(serverPort);
     // connect to server specified in serverAddress and socket connectSocket
     if (connect(connectSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR)
     {
@@ -86,6 +103,7 @@ int main()
     while (true)
     {
         if (!dataSent) {
+            puts("__________________________________________________________________________________");
             puts("MAIN MENU: ");
             puts("0. Exit.");
             puts("1. Register process.");

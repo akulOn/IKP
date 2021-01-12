@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <winsock.h>
+#include <tchar.h>
 #include "..\Common\ReplicatorList.h"
 #include "..\Common\ProcessList.h"
 #pragma comment(lib, "Ws2_32.lib")
@@ -261,6 +262,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 			{
 				if (PushBack(&head, *process))
 				{
+					puts("__________________________________________________________________________________");
 					printf("New process added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 					strcpy(recvbuf, "1");
 
@@ -278,6 +280,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 				}
 				else
 				{
+					puts("__________________________________________________________________________________");
 					printf("Process: ID: {" GUID_FORMAT "} is already registered.\n", GUID_ARG(process->processId));
 					strcpy(recvbuf, "0");
 				}
@@ -301,12 +304,14 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 					recvbuf[iResult] = '\0';
 					DATA data = InitData(&recvbuf[1]);
 					PushProcess(&headProcess, data);
+					puts("__________________________________________________________________________________");
 					printf("Message received from process: %s.\n", &recvbuf[1]);
 					printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 					strcpy(recvbuf, "1");
 				}
 				else
 				{
+					puts("__________________________________________________________________________________");
 					printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
 					strcpy(recvbuf, "0");
 				}
@@ -325,6 +330,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 		else if (iResult == 0)
 		{
 			// connection was closed gracefully
+			puts("__________________________________________________________________________________");
 			printf("Connection with process(ID: {" GUID_FORMAT "}) closed.\n", GUID_ARG(process->processId));
 			closesocket(acceptedSocket);
 			break;
@@ -375,19 +381,55 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 				{
 					DATA data = InitData(&recvbuf[1]);
 					PushProcess(&headProcess, data);
+					puts("__________________________________________________________________________________");
 					printf("Message received from Replicator1: %s.\n", &recvbuf[1]);
-					//printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 				}
 				else 
 				{
 					GUID id = stringToGUID(recvbuf);
-					printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+					puts("__________________________________________________________________________________");
+					printf("Process registered on Replicator1, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+					
+					//POKRETANJE NOVOG PROCESA
+					STARTUPINFO si;
+					PROCESS_INFORMATION pi;
+
+					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017";
+
+					ZeroMemory(&si, sizeof(si));
+					si.cb = sizeof(si);
+					ZeroMemory(&pi, sizeof(pi));
+
+					// Start the child process. 
+					if (!CreateProcess(_T("C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
+						Command,        // Command line
+						NULL,           // Process handle not inheritable
+						NULL,           // Thread handle not inheritable
+						FALSE,          // Set handle inheritance to FALSE
+						CREATE_NEW_CONSOLE,// No creation flags
+						NULL,           // Use parent's environment block
+						NULL,           // Use parent's starting directory 
+						&si,            // Pointer to STARTUPINFO structure
+						&pi)           // Pointer to PROCESS_INFORMATION structure
+						)
+					{
+						printf("CreateProcess failed (%d).\n", GetLastError());
+						return 0;
+					}
+
+					// Wait until child process exits.
+					//WaitForSingleObject(pi.hProcess, INFINITE);
+
+					// Close process and thread handles. 
+					CloseHandle(pi.hProcess);
+					CloseHandle(pi.hThread);
 				}
 			}
 			else if (iResult == 0)
 			{
 				// connection was closed gracefully
-				printf("Connection with client closed.\n");
+				puts("__________________________________________________________________________________");
+				printf("Connection with Replicator1 closed.\n");
 				closesocket(*acceptedSocket);
 			}
 			else
