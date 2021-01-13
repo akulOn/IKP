@@ -325,16 +325,19 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 				else if (recvbuf[0] == '2')   //PUSH DATA
 				{
 					if (Contains(&head, *process))
-					{
-						//recvbuf[iResult] = '\0'; ne znam sta ovo radi, bacalo je warning
+					{						
+						char temp[DEFAULT_BUFLEN];
+						strcpy(temp, &recvbuf[1]);
+						temp[iResult - 1] = '\0';
 
 						guidToString(&process->processId, &recvbuf[1]);
+						strcpy(&recvbuf[37], temp);
 
-						DATA data = InitData(&recvbuf[sizeof(GUID) + 1]);
+						DATA data = InitData(temp);
+
 						PushProcess(&headProcess, data);
 
 						puts("__________________________________________________________________________________");
-						printf("Message received from process: %s.\n", &recvbuf[sizeof(GUID) + 1]);
 						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 
 						recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci

@@ -394,8 +394,9 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
 					PROCESS* process = &processInfo;
 
-					DATA data = InitData(&recvbuf[sizeof(GUID) + 1]);
 
+					DATA data;                           // lose resenje
+					strcpy(data.data, &recvbuf[37]);
 					FindProcess(&head, &process, guid);
 
 					PushProcess(&headProcess, data);
