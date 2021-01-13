@@ -310,13 +310,33 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 			{
 				if (Contains(&head, *process))
 				{
-					recvbuf[iResult] = '\0';
-					DATA data = InitData(&recvbuf[1]);
+					int tempInt = iResult - 1;
+					char temp[DEFAULT_BUFLEN];
+					strcpy(temp, &recvbuf[1]);
+					//memset(temp, 0x00, iResult - 1);
+					temp[tempInt] = '\0';
+
+					guidToString(&process->processId, &recvbuf[1]);
+					strcpy(&recvbuf[37], temp);
+
+					DATA data = InitData(temp);
+
 					PushProcess(&headProcess, data);
 
 					puts("__________________________________________________________________________________");
-					printf("Message received from process: %s.\n", &recvbuf[1]);
 					printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+
+					recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci
+					iResult = send(replicatorSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+					if (iResult == SOCKET_ERROR)
+					{
+						printf("send failed with error: %d\n", WSAGetLastError());
+						closesocket(replicatorSocket);
+						WSACleanup();
+						return 1;
+					}
+
 					strcpy(recvbuf, "3");
 				}
 				else
@@ -394,7 +414,6 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
 					PROCESS* process = &processInfo;
 
-
 					DATA data;                           // lose resenje
 					strcpy(data.data, &recvbuf[37]);
 					FindProcess(&head, &process, guid);
@@ -407,7 +426,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					CreateThread(NULL, 0, &handleData, &processInfo, 0, &funId);
 
 					puts("__________________________________________________________________________________");
-					printf("Message received from Replicator1: %s.\n", &recvbuf[1]);
+					printf("Message received from Replicator1: %s.\n", &recvbuf[37]);
 				}
 				else 
 				{

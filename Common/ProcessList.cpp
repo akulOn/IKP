@@ -62,7 +62,7 @@ void PrintAllData(NODE_PROCESS** head)
 {
 	NODE_PROCESS* tempNode = *head;
 
-	printf("\nAll processes:\n");
+	printf("\nAll data:\n");
 	while (tempNode != NULL)
 	{
 		printf("%s\n", tempNode->data);

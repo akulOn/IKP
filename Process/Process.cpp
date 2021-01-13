@@ -186,9 +186,6 @@ void RegisterProcess(SOCKET connectSocket, int i)
 {
 	char messageBuffer[DEFAULT_BUFLEN];
 
-	fd_set readfds;
-	FD_ZERO(&readfds);
-
 	// Send an prepared message with null terminator included
 	int iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
 
@@ -200,56 +197,11 @@ void RegisterProcess(SOCKET connectSocket, int i)
 		return;
 	}
 
-	//ovde primamo rezultat
-
-	FD_SET(connectSocket, &readfds);
-	timeval timeVal;
-	timeVal.tv_sec = 2;
-	timeVal.tv_usec = 0;
-	int result = select(0, &readfds, NULL, NULL, &timeVal);
-
-	if (result == 0)
-	{
-		// vreme za cekanje je isteklo
-	}
-	else if (result == SOCKET_ERROR)
-	{
-		//desila se greska prilikom poziva funkcije
-	}
-	else if (FD_ISSET(connectSocket, &readfds))
-	{
-		// rezultat je jednak broju soketa koji su zadovoljili uslov
-		iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
-		if (iResult > 0)
-		{
-			if (messageBuffer[0] == '1')
-				printf("Registered successfully.\n");
-			else
-				printf("This process is registered already.\n");
-		}
-		else if (iResult == 0)
-		{
-			// connection was closed gracefully
-			printf("Connection with client closed.\n");
-			closesocket(connectSocket);
-		}
-		else
-		{
-			// there was an error during recv
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(connectSocket);
-		}
-	}
-
-	FD_CLR(connectSocket, &readfds);
 }
 
 void SendData(SOCKET connectSocket, char* i)
 {
 	char messageBuffer[DEFAULT_BUFLEN];
-
-	fd_set readfds;
-	FD_ZERO(&readfds);
 
 	// Send an prepared message with null terminator included
 	int iResult = send(connectSocket, i, (int)strlen(i), 0);
@@ -261,49 +213,6 @@ void SendData(SOCKET connectSocket, char* i)
 		WSACleanup();
 		return;
 	}
-
-	//ovde primamo rezultat
-
-	FD_SET(connectSocket, &readfds);
-	timeval timeVal;
-	timeVal.tv_sec = 2;
-	timeVal.tv_usec = 0;
-	int result = select(0, &readfds, NULL, NULL, &timeVal);
-
-	if (result == 0)
-	{
-		// vreme za cekanje je isteklo
-	}
-	else if (result == SOCKET_ERROR)
-	{
-		//desila se greska prilikom poziva funkcije
-	}
-	else if (FD_ISSET(connectSocket, &readfds))
-	{
-		// rezultat je jednak broju soketa koji su zadovoljili uslov
-		iResult = recv(connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
-		if (iResult > 0)
-		{
-			if (messageBuffer[0] == '3')
-				printf("Data saved successfully.\n"); // tu treba dodati logiku za slanje poruke
-			else
-				printf("Data wasn't saved successfully.\n");
-		}
-		else if (iResult == 0)
-		{
-			// connection was closed gracefully
-			printf("Connection with client closed.\n");
-			closesocket(connectSocket);
-		}
-		else
-		{
-			// there was an error during recv
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(connectSocket);
-		}
-	}
-
-	FD_CLR(connectSocket, &readfds);
 }
 
 char* guidToString(const GUID* id, char* out) {
@@ -329,60 +238,67 @@ DWORD WINAPI handleIncomingData(LPVOID lpParam)
 {
 	SOCKET* connectSocket = (SOCKET*)lpParam;
 
+	printf("%d\n", connectSocket);
+
 	int iResult;
 	char messageBuffer[DEFAULT_BUFLEN];
 
-	fd_set readfds;
-	FD_ZERO(&readfds);
+	while (true)
+	{
+		fd_set readfds;
+		FD_ZERO(&readfds);
 
-	FD_SET(*connectSocket, &readfds);
-	timeval timeVal;
-	timeVal.tv_sec = 2;
-	timeVal.tv_usec = 0;
-	int result = select(0, &readfds, NULL, NULL, &timeVal);
+		FD_SET(*connectSocket, &readfds);
+		timeval timeVal;
+		timeVal.tv_sec = 2;
+		timeVal.tv_usec = 0;
+		int result = select(0, &readfds, NULL, NULL, &timeVal);
 
-	if (result == 0)
-	{
-		// vreme za cekanje je isteklo
-	}
-	else if (result == SOCKET_ERROR)
-	{
-		//desila se greska prilikom poziva funkcije
-	}
-	else if (FD_ISSET(*connectSocket, &readfds))
-	{
-		// rezultat je jednak broju soketa koji su zadovoljili uslov
-		iResult = recv(*connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
-		if (iResult > 0)
+		if (result == 0)
 		{
-			if (messageBuffer[0] == '0')
-				printf("This process is registered already.\n");
-			else if (messageBuffer[0] == '1')
-				printf("Registered successfully.\n");
-			else if (messageBuffer[0] == '2')
-				printf("Data wasn't saved successfully.\n");
-			else if (messageBuffer[0] == '3')
-				printf("Data saved successfully.\n");
-			else if (messageBuffer[0] == '4')
+			// vreme za cekanje je isteklo
+		}
+		else if (result == SOCKET_ERROR)
+		{
+			//desila se greska prilikom poziva funkcije
+		}
+		else if (FD_ISSET(*connectSocket, &readfds))
+		{
+			// rezultat je jednak broju soketa koji su zadovoljili uslov
+			iResult = recv(*connectSocket, messageBuffer, DEFAULT_BUFLEN, 0);
+			if (iResult > 0)
 			{
-				DATA data = InitData(&messageBuffer[1]);
-				PushProcess(&headProcess, data);
+				if (messageBuffer[0] == '0')
+					printf("This process is registered already.\n");
+				else if (messageBuffer[0] == '1')
+					printf("Registered successfully.\n");
+				else if (messageBuffer[0] == '2')
+					printf("Data wasn't saved successfully.\n");
+				else if (messageBuffer[0] == '3')
+					printf("Data saved successfully.\n");
+				else if (messageBuffer[0] == '4')
+				{
+					DATA data = InitData(&messageBuffer[1]);
+					PushProcess(&headProcess, data);
 
-				PrintAllData(&headProcess);
+					PrintAllData(&headProcess);
+				}
+			}
+			else if (iResult == 0)
+			{
+				// connection was closed gracefully
+				printf("Connection with client closed.\n");
+				closesocket(*connectSocket);
+			}
+			else
+			{
+				// there was an error during recv
+				printf("recv failed with error: %d\n", WSAGetLastError());
+				closesocket(*connectSocket);
 			}
 		}
-		else if (iResult == 0)
-		{
-			// connection was closed gracefully
-			printf("Connection with client closed.\n");
-			closesocket(*connectSocket);
-		}
-		else
-		{
-			// there was an error during recv
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(*connectSocket);
-		}
-		return 0;
+		FD_CLR(*connectSocket, &readfds);
 	}
+	
+		return 0;
 }

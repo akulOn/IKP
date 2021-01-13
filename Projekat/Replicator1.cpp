@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <winsock.h>
+#include <tchar.h>
 #include "..\Common\ReplicatorList.h"
 #include "..\Common\ProcessList.h"
 #pragma comment(lib, "Ws2_32.lib")
@@ -22,6 +23,7 @@ bool InitializeWindowsSockets();
 
 DWORD WINAPI handleSocket(LPVOID lpParam);
 DWORD WINAPI handleConnectSocket(LPVOID lpParam);
+DWORD WINAPI handleData(LPVOID lpParam);
 
 char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
@@ -424,15 +426,76 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 			iResult = recv(*acceptedSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0)
 			{
-				GUID id = stringToGUID(recvbuf);
-				puts("__________________________________________________________________________________");
-				printf("Process registered on Replicator2, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+				if (recvbuf[0] == '+')
+				{
+					GUID guid = stringToGUID(&recvbuf[1]);
+
+					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
+					PROCESS* process = &processInfo;
+
+					DATA data;                           // lose resenje
+					strcpy(data.data, &recvbuf[37]);
+					FindProcess(&head, &process, guid);
+
+					PushProcess(&headProcess, data);
+
+					DWORD funId;
+					HANDLE handle;
+
+					CreateThread(NULL, 0, &handleData, &processInfo, 0, &funId);
+
+					puts("__________________________________________________________________________________");
+					printf("Message received from Replicator2: %s.\n", &recvbuf[37]);
+				}
+				else
+				{
+					GUID id = stringToGUID(recvbuf);
+					PROCESS process = InitProcess(id, NULL);
+					PushBack(&head, process);
+
+					puts("__________________________________________________________________________________");
+					printf("Process registered on Replicator1, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+
+					//POKRETANJE NOVOG PROCESA
+					STARTUPINFO si;
+					PROCESS_INFORMATION pi;
+
+					wchar_t Command[] = L"C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017";
+
+					ZeroMemory(&si, sizeof(si));
+					si.cb = sizeof(si);
+					ZeroMemory(&pi, sizeof(pi));
+
+					// Start the child process. 
+					if (!CreateProcess(_T("C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
+						Command,        // Command line
+						NULL,           // Process handle not inheritable
+						NULL,           // Thread handle not inheritable
+						FALSE,          // Set handle inheritance to FALSE
+						CREATE_NEW_CONSOLE,// No creation flags
+						NULL,           // Use parent's environment block
+						NULL,           // Use parent's starting directory 
+						&si,            // Pointer to STARTUPINFO structure
+						&pi)           // Pointer to PROCESS_INFORMATION structure
+						)
+					{
+						printf("CreateProcess failed (%d).\n", GetLastError());
+						return 0;
+					}
+
+					// Wait until child process exits.
+					//WaitForSingleObject(pi.hProcess, INFINITE);
+
+					// Close process and thread handles. 
+					CloseHandle(pi.hProcess);
+					CloseHandle(pi.hThread);
+				}
 			}
 			else if (iResult == 0)
 			{
 				// connection was closed gracefully
 				puts("__________________________________________________________________________________");
-				printf("Connection with Replicator2 closed.\n");
+				printf("Connection with Replicator1 closed.\n");
 				closesocket(*acceptedSocket);
 			}
 			else
@@ -446,6 +509,35 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 
 	} while (true);
 
+	return 0;
+}
+
+DWORD WINAPI handleData(LPVOID lpParam)
+{
+	PROCESS* process = (PROCESS*)lpParam;
+	SOCKET acceptedSocket = process->acceptedSocket;
+	GUID Id = process->processId;
+
+	int iResult;
+	char recvbuf[DEFAULT_BUFLEN];
+
+	DATA returnData = PopFront(&headProcess);
+
+	if (returnData.data != NULL)
+	{
+		strcpy(&recvbuf[0], "4");
+		strcpy(&recvbuf[1], returnData.data);
+
+		iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(acceptedSocket);
+			WSACleanup();
+			return 1;
+		}
+	}
 	return 0;
 }
 
