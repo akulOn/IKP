@@ -29,13 +29,15 @@ char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
 
 NODE_REPLICATOR* head;
-NODE_PROCESS* headProcess;
+NODE_PROCESS* headProcessReceive;
+NODE_PROCESS* headProcessSend;
 SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
 	InitReplicatorList(&head);
-	InitProcessList(&headProcess);
+	InitProcessList(&headProcessReceive);
+	InitProcessList(&headProcessSend);
 
 #pragma region listenRegion
 
@@ -195,8 +197,8 @@ int main()
 
 		//POKRETANJE NITI ZA SVAKOG KLIJENTA(PROCES)
 
-		DWORD funId;
-		HANDLE handle;
+		DWORD funId[10];
+		HANDLE handle[10];
 
 		PROCESS processAdd;
 		GUID Id;
@@ -204,7 +206,9 @@ int main()
 		CoCreateGuid(&Id);
 		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
 
-		CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId);
+		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId[numberOfClients]);
+		CloseHandle(handle[numberOfClients]);
+
 		numberOfClients++;
 
 	} while (1);
@@ -255,122 +259,144 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 		AddSocketToID(&head, &process);
 	}
 
-	//unsigned long mode = 1; 
+	unsigned long mode = 1; 
 	//non-blocking mode
-	//iResult = ioctlsocket(acceptedSocket, FIONBIO, &mode);
-	//if (iResult != NO_ERROR)
-	//    printf("ioctlsocket failed with error: %ld\n", iResult);
+	iResult = ioctlsocket(acceptedSocket, FIONBIO, &mode);
+	if (iResult != NO_ERROR)
+	    printf("ioctlsocket failed with error: %ld\n", iResult);
 
 	do
 	{
+		fd_set readfds;
+		FD_ZERO(&readfds);
 		// Receive data until the client shuts down the connection
-		iResult = recv(acceptedSocket, recvbuf, DEFAULT_BUFLEN, 0);
-		if (iResult > 0)
-		{
-			if (recvbuf[0] == 1)    //PUSH PROCESS
-			{
-				if (PushBack(&head, *process))
-				{
-					puts("__________________________________________________________________________________");
-					printf("New process added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
-					strcpy(recvbuf, "1");
+		FD_SET(acceptedSocket, &readfds);
+		timeval timeVal;
+		timeVal.tv_sec = 2;
+		timeVal.tv_usec = 0;
+		int result = select(0, &readfds, NULL, NULL, &timeVal);
 
-					char output[DEFAULT_BUFLEN];
-					guidToString(&process->processId, output);
-					iResult = send(replicatorSocket, output, strlen(output) + 1, 0);
+		if (result == 0)
+		{
+			// vreme za cekanje je isteklo
+		}
+		else if (result == SOCKET_ERROR)
+		{
+			//desila se greska prilikom poziva funkcije
+		}
+		else if (FD_ISSET(acceptedSocket, &readfds))
+		{
+			// Receive data until the client shuts down the connection
+			iResult = recv(acceptedSocket, recvbuf, DEFAULT_BUFLEN, 0);
+			if (iResult > 0)
+			{
+				if (recvbuf[0] == 1)    //PUSH PROCESS
+				{
+					if (PushBack(&head, *process))
+					{
+						puts("__________________________________________________________________________________");
+						printf("New process added! ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+						strcpy(recvbuf, "1");
+
+						char output[DEFAULT_BUFLEN];
+						guidToString(&process->processId, output);
+						iResult = send(replicatorSocket, output, strlen(output) + 1, 0);
+
+						if (iResult == SOCKET_ERROR)
+						{
+							printf("send failed with error: %d\n", WSAGetLastError());
+							closesocket(replicatorSocket);
+							WSACleanup();
+							return 1;
+						}
+					}
+					else
+					{
+						puts("__________________________________________________________________________________");
+						printf("Process: ID: {" GUID_FORMAT "} is already registered.\n", GUID_ARG(process->processId));
+						strcpy(recvbuf, "0");
+					}
+
+					iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
 
 					if (iResult == SOCKET_ERROR)
 					{
 						printf("send failed with error: %d\n", WSAGetLastError());
-						closesocket(replicatorSocket);
+						closesocket(acceptedSocket);
 						WSACleanup();
 						return 1;
 					}
+
+					PrintAllProcesses(&head);
 				}
-				else
+				else if (recvbuf[0] == '2')   //PUSH DATA
 				{
-					puts("__________________________________________________________________________________");
-					printf("Process: ID: {" GUID_FORMAT "} is already registered.\n", GUID_ARG(process->processId));
-					strcpy(recvbuf, "0");
-				}
+					if (Contains(&head, *process))
+					{
+						int tempInt = iResult - 1;
+						char temp[DEFAULT_BUFLEN];
+						strcpy(temp, &recvbuf[1]);
+						//memset(temp, 0x00, iResult - 1);
+						temp[tempInt] = '\0';
 
-				iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+						guidToString(&process->processId, &recvbuf[1]);
+						strcpy(&recvbuf[37], temp);
 
-				if (iResult == SOCKET_ERROR)
-				{
-					printf("send failed with error: %d\n", WSAGetLastError());
-					closesocket(acceptedSocket);
-					WSACleanup();
-					return 1;
-				}
+						DATA data = InitData(temp);
 
-				PrintAllProcesses(&head);
-			}
-			else if (recvbuf[0] == '2')   //PUSH DATA
-			{
-				if (Contains(&head, *process))
-				{
-					int tempInt = iResult - 1;
-					char temp[DEFAULT_BUFLEN];
-					strcpy(temp, &recvbuf[1]);
-					//memset(temp, 0x00, iResult - 1);
-					temp[tempInt] = '\0';
+						PushProcess(&headProcessReceive, data);
 
-					guidToString(&process->processId, &recvbuf[1]);
-					strcpy(&recvbuf[37], temp);
+						puts("__________________________________________________________________________________");
+						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 
-					DATA data = InitData(temp);
+						recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci
+						iResult = send(replicatorSocket, recvbuf, strlen(recvbuf) + 1, 0);
 
-					PushProcess(&headProcess, data);
+						if (iResult == SOCKET_ERROR)
+						{
+							printf("send failed with error: %d\n", WSAGetLastError());
+							closesocket(replicatorSocket);
+							WSACleanup();
+							return 1;
+						}
 
-					puts("__________________________________________________________________________________");
-					printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
+						strcpy(recvbuf, "3");
+					}
+					else
+					{
+						puts("__________________________________________________________________________________");
+						printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
+						strcpy(recvbuf, "2");
+					}
 
-					recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci
-					iResult = send(replicatorSocket, recvbuf, strlen(recvbuf) + 1, 0);
+					iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
 
 					if (iResult == SOCKET_ERROR)
 					{
 						printf("send failed with error: %d\n", WSAGetLastError());
-						closesocket(replicatorSocket);
+						closesocket(acceptedSocket);
 						WSACleanup();
 						return 1;
 					}
-
-					strcpy(recvbuf, "3");
-				}
-				else
-				{
-					puts("__________________________________________________________________________________");
-					printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
-					strcpy(recvbuf, "2");
-				}
-
-				iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
-
-				if (iResult == SOCKET_ERROR)
-				{
-					printf("send failed with error: %d\n", WSAGetLastError());
-					closesocket(acceptedSocket);
-					WSACleanup();
-					return 1;
 				}
 			}
+			else if (iResult == 0)
+			{
+				// connection was closed gracefully
+				puts("__________________________________________________________________________________");
+				printf("Connection with process(ID: {" GUID_FORMAT "}) closed.\n", GUID_ARG(process->processId));
+				closesocket(acceptedSocket);
+				break;
+			}
+			else
+			{
+				// there was an error during recv
+				printf("recv failed with error: %d\n", WSAGetLastError());
+				closesocket(acceptedSocket);
+			}
 		}
-		else if (iResult == 0)
-		{
-			// connection was closed gracefully
-			puts("__________________________________________________________________________________");
-			printf("Connection with process(ID: {" GUID_FORMAT "}) closed.\n", GUID_ARG(process->processId));
-			closesocket(acceptedSocket);
-			break;
-		}
-		else
-		{
-			// there was an error during recv
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(acceptedSocket);
-		}
+		FD_CLR(acceptedSocket, &readfds);
+
 	} while (true);
 
 	return 0;
@@ -418,7 +444,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					strcpy(data.data, &recvbuf[37]);
 					FindProcess(&head, &process, guid);
 
-					PushProcess(&headProcess, data);
+					PushProcess(&headProcessSend, data);
 
 					DWORD funId;
 					HANDLE handle;
@@ -502,7 +528,7 @@ DWORD WINAPI handleData(LPVOID lpParam)
 	int iResult;
 	char recvbuf[DEFAULT_BUFLEN];
 
-	DATA returnData = PopFront(&headProcess);
+	DATA returnData = PopFront(&headProcessSend);
 
 	if (returnData.data != NULL)
 	{

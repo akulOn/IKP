@@ -29,13 +29,15 @@ char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
 
 NODE_REPLICATOR* head;
-NODE_PROCESS* headProcess;
+NODE_PROCESS* headProcessReceive;
+NODE_PROCESS* headProcessSend;
 SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
 	InitReplicatorList(&head);
-	InitProcessList(&headProcess);
+	InitProcessList(&headProcessReceive);
+	InitProcessList(&headProcessSend);
 
 #pragma region listenRegion
 
@@ -202,6 +204,8 @@ int main()
 		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
 
 		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId[numberOfClients]);
+		CloseHandle(handle[numberOfClients]);
+
 		numberOfClients++;
 
 	} while (1);
@@ -337,7 +341,7 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 
 						DATA data = InitData(temp);
 
-						PushProcess(&headProcess, data);
+						PushProcess(&headProcessReceive, data);
 
 						puts("__________________________________________________________________________________");
 						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
@@ -437,7 +441,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					strcpy(data.data, &recvbuf[37]);
 					FindProcess(&head, &process, guid);
 
-					PushProcess(&headProcess, data);
+					PushProcess(&headProcessSend, data);
 
 					DWORD funId;
 					HANDLE handle;
@@ -521,7 +525,7 @@ DWORD WINAPI handleData(LPVOID lpParam)
 	int iResult;
 	char recvbuf[DEFAULT_BUFLEN];
 
-	DATA returnData = PopFront(&headProcess);
+	DATA returnData = PopFront(&headProcessSend);
 
 	if (returnData.data != NULL)
 	{
