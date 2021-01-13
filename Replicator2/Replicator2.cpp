@@ -20,8 +20,10 @@
 #define GUID_ARG(guid) guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 
 bool InitializeWindowsSockets();
+
 DWORD WINAPI handleSocket(LPVOID lpParam);
 DWORD WINAPI handleConnectSocket(LPVOID lpParam);
+DWORD WINAPI handleData(LPVOID lpParam);
 
 char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
@@ -311,16 +313,17 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 					recvbuf[iResult] = '\0';
 					DATA data = InitData(&recvbuf[1]);
 					PushProcess(&headProcess, data);
+
 					puts("__________________________________________________________________________________");
 					printf("Message received from process: %s.\n", &recvbuf[1]);
 					printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
-					strcpy(recvbuf, "1");
+					strcpy(recvbuf, "3");
 				}
 				else
 				{
 					puts("__________________________________________________________________________________");
 					printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
-					strcpy(recvbuf, "0");
+					strcpy(recvbuf, "2");
 				}
 
 				iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
@@ -386,8 +389,22 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 			{
 				if (recvbuf[0] == '+') 
 				{
-					DATA data = InitData(&recvbuf[1]);
+					GUID guid = stringToGUID(&recvbuf[1]);
+
+					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
+					PROCESS* process = &processInfo;
+
+					DATA data = InitData(&recvbuf[sizeof(GUID) + 1]);
+
+					FindProcess(&head, &process, guid);
+
 					PushProcess(&headProcess, data);
+
+					DWORD funId;
+					HANDLE handle;
+
+					CreateThread(NULL, 0, &handleData, &processInfo, 0, &funId);
+
 					puts("__________________________________________________________________________________");
 					printf("Message received from Replicator1: %s.\n", &recvbuf[1]);
 				}
@@ -453,6 +470,35 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 
 	} while (true);
 
+	return 0;
+}
+
+DWORD WINAPI handleData(LPVOID lpParam)
+{
+	PROCESS* process = (PROCESS*)lpParam;
+	SOCKET acceptedSocket = process->acceptedSocket;
+	GUID Id = process->processId;
+
+	int iResult;
+	char recvbuf[DEFAULT_BUFLEN];
+
+	DATA returnData = PopFront(&headProcess);
+
+	if (returnData.data != NULL)
+	{
+		strcpy(&recvbuf[0], "4");
+		strcpy(&recvbuf[1], returnData.data);
+
+		iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(acceptedSocket);
+			WSACleanup();
+			return 1;
+		}
+	}
 	return 0;
 }
 

@@ -27,4 +27,6 @@ bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process);
 
 bool IsSocketNull(NODE_REPLICATOR** head);
 
+bool FindProcess(NODE_REPLICATOR** head, PROCESS** process, GUID guid);
+
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket);

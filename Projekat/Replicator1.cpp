@@ -19,6 +19,7 @@
 #define GUID_ARG(guid) guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 
 bool InitializeWindowsSockets();
+
 DWORD WINAPI handleSocket(LPVOID lpParam);
 DWORD WINAPI handleConnectSocket(LPVOID lpParam);
 
@@ -31,8 +32,8 @@ SOCKET replicatorSocket = INVALID_SOCKET;
 
 int main()
 {
-    InitReplicatorList(&head);
-    InitProcessList(&headProcess);
+	InitReplicatorList(&head);
+	InitProcessList(&headProcess);
 
 #pragma region listenRegion
 
@@ -197,7 +198,7 @@ int main()
 		GUID Id;
 		CoCreateGuid(&Id);
 		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
-		
+
 		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId[numberOfClients]);
 		numberOfClients++;
 
@@ -325,11 +326,15 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 				{
 					if (Contains(&head, *process))
 					{
-						recvbuf[iResult] = '\0';
-						DATA data = InitData(&recvbuf[1]);
+						//recvbuf[iResult] = '\0'; ne znam sta ovo radi, bacalo je warning
+
+						guidToString(&process->processId, &recvbuf[1]);
+
+						DATA data = InitData(&recvbuf[sizeof(GUID) + 1]);
 						PushProcess(&headProcess, data);
+
 						puts("__________________________________________________________________________________");
-						printf("Message received from process: %s.\n", &recvbuf[1]);
+						printf("Message received from process: %s.\n", &recvbuf[sizeof(GUID) + 1]);
 						printf("Data saved successfully for process: ID: {" GUID_FORMAT "}\n", GUID_ARG(process->processId));
 
 						recvbuf[0] = '+';// zamenio sam '2' sa '+' jer 2 moze da bude na pocetnom mestu u GUID-u...'+' ce biti indikator na drugom replikatoru da se upisuju novi podaci
@@ -343,13 +348,13 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 							return 1;
 						}
 
-						strcpy(recvbuf, "1");
+						strcpy(recvbuf, "3");
 					}
 					else
 					{
 						puts("__________________________________________________________________________________");
 						printf("Process: ID: {" GUID_FORMAT "} is not registered!\n", GUID_ARG(process->processId));
-						strcpy(recvbuf, "0");
+						strcpy(recvbuf, "2");
 					}
 
 					iResult = send(acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);

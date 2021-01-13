@@ -58,6 +58,20 @@ DATA PopFront(NODE_PROCESS** head)
 	return returnData;
 }
 
+void PrintAllData(NODE_PROCESS** head)
+{
+	NODE_PROCESS* tempNode = *head;
+
+	printf("\nAll processes:\n");
+	while (tempNode != NULL)
+	{
+		printf("%s\n", tempNode->data);
+
+		tempNode = tempNode->next;
+	}
+	printf("\n");
+}
+
 DATA InitData(char* data)
 {
 	DATA d;

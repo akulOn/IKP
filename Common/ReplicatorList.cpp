@@ -110,6 +110,27 @@ bool IsSocketNull(NODE_REPLICATOR** head)
 	return false;
 }
 
+bool FindProcess(NODE_REPLICATOR** head, PROCESS** process, GUID guid)
+{
+	NODE_REPLICATOR* tempNode = *head;
+	PROCESS* tempProcess = *process;
+
+	while (tempNode != NULL)
+	{
+		if (tempNode->process.processId == guid)
+		{
+			EnterCriticalSection(&csReplicator);
+			tempProcess->acceptedSocket = tempNode->process.acceptedSocket;
+			tempProcess->processId = tempNode->process.processId;
+			EnterCriticalSection(&csReplicator);
+			return true;
+		}
+
+		tempNode = tempNode->next;
+	}
+	return false;
+}
+
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket)
 {
 	PROCESS p;

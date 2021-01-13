@@ -17,4 +17,6 @@ void PushProcess(NODE_PROCESS** head, DATA data);
 
 DATA PopFront(NODE_PROCESS** head);
 
+void PrintAllData(NODE_PROCESS** head);
+
 DATA InitData(char* data);
