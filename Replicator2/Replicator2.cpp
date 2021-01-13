@@ -198,6 +198,7 @@ int main()
 
 		PROCESS processAdd;
 		GUID Id;
+
 		CoCreateGuid(&Id);
 		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
 
@@ -245,6 +246,12 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 	GUID Id = process->processId;
 	int iResult;
 	char recvbuf[512];
+
+	if (IsSocketNull(&head))
+	{
+		*process = InitProcess(Id, acceptedSocket);
+		AddSocketToID(&head, &process);
+	}
 
 	//unsigned long mode = 1; 
 	//non-blocking mode
@@ -387,6 +394,9 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 				else 
 				{
 					GUID id = stringToGUID(recvbuf);
+					PROCESS process = InitProcess(id, NULL);
+					PushBack(&head, process);
+
 					puts("__________________________________________________________________________________");
 					printf("Process registered on Replicator1, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
 					
@@ -394,14 +404,14 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					STARTUPINFO si;
 					PROCESS_INFORMATION pi;
 
-					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017";
+					wchar_t Command[] = L"C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017";
 
 					ZeroMemory(&si, sizeof(si));
 					si.cb = sizeof(si);
 					ZeroMemory(&pi, sizeof(pi));
 
 					// Start the child process. 
-					if (!CreateProcess(_T("C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
+					if (!CreateProcess(_T("C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
 						Command,        // Command line
 						NULL,           // Process handle not inheritable
 						NULL,           // Thread handle not inheritable

@@ -25,8 +25,11 @@ void SendData(SOCKET connectSocket, char* i);
 char* guidToString(const GUID* id, char* out);
 GUID stringToGUID(const std::string& guid);
 
+NODE_PROCESS* headProcess;
+
 int main(int argc, char* argv[])
 {
+    InitProcessList(&headProcess);
     int serverPort = DEFAULT_PORT_R1;
     
     if (argc > 1)

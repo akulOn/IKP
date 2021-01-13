@@ -76,6 +76,40 @@ bool Contains(NODE_REPLICATOR** head, PROCESS process)
 	return false;
 }
 
+bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process)
+{
+	NODE_REPLICATOR* tempNode = *head;
+	PROCESS* tempProcess = *process;
+
+	while (tempNode != NULL)
+	{
+		if (tempNode->process.acceptedSocket == NULL)
+		{
+			EnterCriticalSection(&csReplicator);
+			tempNode->process.acceptedSocket = tempProcess->acceptedSocket;
+			tempProcess->processId = tempNode->process.processId;
+			LeaveCriticalSection(&csReplicator);
+			return true;
+		}
+		tempNode = tempNode->next;
+	}
+	return false;
+}
+
+bool IsSocketNull(NODE_REPLICATOR** head)
+{
+	NODE_REPLICATOR* tempNode = *head;
+
+	while (tempNode != NULL)
+	{
+		if (tempNode->process.acceptedSocket == NULL)
+			return true;
+
+		tempNode = tempNode->next;
+	}
+	return false;
+}
+
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket)
 {
 	PROCESS p;

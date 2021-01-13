@@ -23,4 +23,8 @@ void PrintAllProcesses(NODE_REPLICATOR** head);
 
 bool Contains(NODE_REPLICATOR** head, PROCESS process);
 
+bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process);
+
+bool IsSocketNull(NODE_REPLICATOR** head);
+
 PROCESS InitProcess(GUID processId, SOCKET acceptedSocket);

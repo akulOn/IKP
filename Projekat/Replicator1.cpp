@@ -243,6 +243,12 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 	int iResult;
 	char recvbuf[512];
 
+	if (IsSocketNull(&head))
+	{
+		*process = InitProcess(Id, acceptedSocket);
+		AddSocketToID(&head, &process);
+	}
+
 	unsigned long mode = 1; //non-blocking mode
 	iResult = ioctlsocket(acceptedSocket, FIONBIO, &mode);
 	if (iResult != NO_ERROR)
