@@ -238,8 +238,6 @@ DWORD WINAPI handleIncomingData(LPVOID lpParam)
 {
 	SOCKET* connectSocket = (SOCKET*)lpParam;
 
-	printf("%d\n", connectSocket);
-
 	int iResult;
 	char messageBuffer[DEFAULT_BUFLEN];
 
