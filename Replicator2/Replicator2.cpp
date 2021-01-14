@@ -382,10 +382,24 @@ DWORD WINAPI handleSocket(LPVOID lpParam)
 			}
 			else if (iResult == 0)
 			{
+				guidToString(&process->processId, &recvbuf[1]);
+
 				// connection was closed gracefully
 				puts("__________________________________________________________________________________");
 				printf("Connection with process(ID: {" GUID_FORMAT "}) closed.\n", GUID_ARG(process->processId));
 				closesocket(acceptedSocket);
+
+				//Potrebno je javiti drugoj strani da je doslo do prekida konekcije
+				recvbuf[0] = 'x';
+				iResult = send(replicatorSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+				if (iResult == SOCKET_ERROR)
+				{
+					printf("send failed with error: %d\n", WSAGetLastError());
+					closesocket(replicatorSocket);
+					WSACleanup();
+					return 1;
+				}
 				break;
 			}
 			else
@@ -453,6 +467,26 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 
 					puts("__________________________________________________________________________________");
 					printf("Message received from Replicator1: %s.\n", &recvbuf[37]);
+				}
+				else if(recvbuf[0] == 'x')
+				{
+					GUID guid = stringToGUID(&recvbuf[1]);
+
+					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
+					PROCESS* process = &processInfo;
+
+					//DATA data;                           // lose resenje
+					//strcpy(data.data, &recvbuf[37]);
+					//FindProcess(&head, &process, guid);
+					//PushProcess(&headProcessSend, data);
+
+					DWORD funId;
+					HANDLE handle;
+
+					//CreateThread(NULL, 0, &handleData, &processInfo, 0, &funId);
+
+					puts("__________________________________________________________________________________");
+					printf("Replicator1 closed connection with process: %s.\n", &recvbuf[1]);
 				}
 				else 
 				{
