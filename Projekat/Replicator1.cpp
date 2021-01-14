@@ -464,14 +464,16 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					STARTUPINFO si;
 					PROCESS_INFORMATION pi;
 
-					wchar_t Command[] = L"C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017";
+					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017";
+					//C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017
+					//C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017
 
 					ZeroMemory(&si, sizeof(si));
 					si.cb = sizeof(si);
 					ZeroMemory(&pi, sizeof(pi));
 
 					// Start the child process. 
-					if (!CreateProcess(_T("C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
+					if (!CreateProcess(_T("C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
 						Command,        // Command line
 						NULL,           // Process handle not inheritable
 						NULL,           // Thread handle not inheritable
@@ -560,6 +562,6 @@ GUID stringToGUID(const std::string& guid) {
 	GUID output;
 	const auto ret = sscanf(guid.c_str(), "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX", &output.Data1, &output.Data2, &output.Data3, &output.Data4[0], &output.Data4[1], &output.Data4[2], &output.Data4[3], &output.Data4[4], &output.Data4[5], &output.Data4[6], &output.Data4[7]);
 	if (ret != 11)
-		throw std::logic_error("Unvalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
+		throw std::logic_error("Invalid GUID, format should be {00000000-0000-0000-0000-000000000000}");
 	return output;
 }
