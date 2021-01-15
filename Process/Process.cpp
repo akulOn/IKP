@@ -42,10 +42,47 @@ int main(int argc, char* argv[])
 			printf("Connected to the Replicator2!\n");
 			serverPort = DEFAULT_PORT_R2;
 		}
+		else
+		{
+			printf("Connected to the Replicator1!\n");
+			serverPort = DEFAULT_PORT_R1;
+		}
 	}
 	else
 	{
-		printf("Connected to the Replicator1!\n");
+		char line[256];
+		int i = 0;
+		bool selected = false;
+		while (!selected) {
+			printf("Choose replicator(1 or 2): ");
+			if (fgets(line, sizeof(line), stdin))
+			{
+				if (1 == sscanf(line, "%d", &i))
+				{
+					/* Now 'i' can be safely used */
+					if (i == 1)
+					{
+						printf("Connected to the Replicator1!\n");
+						serverPort = DEFAULT_PORT_R1;
+						selected = true;
+					}
+					else if (i == 2)
+					{
+						printf("Connected to the Replicator2!\n");
+						serverPort = DEFAULT_PORT_R2;
+						selected = true;
+					}
+					else
+					{
+						printf("Invalid input.\n");
+					}
+				}
+				else
+				{
+					printf("Invalid input.\n");
+				}
+			}
+		}
 	}
 
 	char messageBuffer[DEFAULT_BUFLEN];
@@ -281,11 +318,16 @@ DWORD WINAPI handleIncomingData(LPVOID lpParam)
 
 					PrintAllData(&headProcess);
 				}
+				else if (messageBuffer[0] == '5') {
+					printf("Your copy has stopped working. Please stop sending messages and close connection.\n");
+					//*connectSocket = NULL;
+					break;
+				}
 			}
 			else if (iResult == 0)
 			{
 				// connection was closed gracefully
-				printf("Connection with client closed.\n");
+				printf("Connection with Replicator closed.\n");
 				closesocket(*connectSocket);
 			}
 			else

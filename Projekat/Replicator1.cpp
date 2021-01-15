@@ -467,23 +467,42 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 				}
 				else if (recvbuf[0] == 'x')
 				{
-					//GUID guid = stringToGUID(&recvbuf[1]);
+					/*GUID guid = stringToGUID(&recvbuf[1]);
 
-					//PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
-					//PROCESS* process = &processInfo;
+					PROCESS processInfo = InitProcess(guid, NULL);
+					PROCESS* process = &processInfo;
 
-					//DATA data;                           // lose resenje
-					//strcpy(data.data, &recvbuf[37]);
-					//FindProcess(&head, &process, guid);
-					//PushProcess(&headProcessSend, data);
-
-					//DWORD funId;
-					//HANDLE handle;
-
-					//CreateThread(NULL, 0, &handleData, &processInfo, 0, &funId);
-
+					FindProcess(&head, &process, guid);
+					*/
 					puts("__________________________________________________________________________________");
 					printf("Replicator2 closed connection with process: %s.\n", &recvbuf[1]);
+					
+					//closesocket(process->acceptedSocket);
+
+
+					/*if (!IsSocketNull(&head)) {
+						GUID guid = stringToGUID(&recvbuf[1]);
+
+						PROCESS processInfo = InitProcess(guid, NULL);
+						PROCESS* process = &processInfo;
+
+						FindProcess(&head, &process, guid);
+
+						puts("__________________________________________________________________________________");
+						printf("Replicator2 closed connection with process: %s.\n", &recvbuf[1]);
+
+						strcpy(&recvbuf[0], "5");
+
+						iResult = send(process->acceptedSocket, recvbuf, strlen(recvbuf) + 1, 0);
+
+						if (iResult == SOCKET_ERROR)
+						{
+							printf("send failed with error: %d\n", WSAGetLastError());
+							closesocket(process->acceptedSocket);
+							WSACleanup();
+							return 1;
+						}
+					}*/
 				}
 				else
 				{
@@ -492,15 +511,15 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					PushBack(&head, process);
 
 					puts("__________________________________________________________________________________");
-					printf("Process registered on Replicator1, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
+					printf("Process registered on Replicator2, ID: {" GUID_FORMAT "}\n", GUID_ARG(id));
 
 					//POKRETANJE NOVOG PROCESA
 					STARTUPINFO si;
 					PROCESS_INFORMATION pi;
 
-					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017";
-					//C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017
-					//C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017
+					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27016";
+					//C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27016
+					//C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27016
 
 					ZeroMemory(&si, sizeof(si));
 					si.cb = sizeof(si);
