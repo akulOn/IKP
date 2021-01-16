@@ -200,13 +200,13 @@ int main()
 		DWORD funId[10];
 		HANDLE handle[10];
 
-		PROCESS processAdd;
+		PROCESS processAdd[10];
 		GUID Id;
 
 		CoCreateGuid(&Id);
-		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
+		processAdd[numberOfClients] = InitProcess(Id, acceptedSocket[numberOfClients]);
 
-		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId[numberOfClients]);
+		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd[numberOfClients], 0, &funId[numberOfClients]);
 		CloseHandle(handle[numberOfClients]);
 
 		numberOfClients++;
@@ -500,7 +500,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					STARTUPINFO si;
 					PROCESS_INFORMATION pi;
 
-					wchar_t Command[] = L"C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017";
+					wchar_t Command[] = L"C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017";
 					//C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe 27017
 					//C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe 27017
 
@@ -509,7 +509,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 					ZeroMemory(&pi, sizeof(pi));
 
 					// Start the child process. 
-					if (!CreateProcess(_T("C:\\Users\\Trudic\\Desktop\\GitDesktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
+					if (!CreateProcess(_T("C:\\Users\\Luka\\Desktop\\IKP\\x64\\Debug\\Process.exe"),   // No module name (use command line)
 						Command,        // Command line
 						NULL,           // Process handle not inheritable
 						NULL,           // Thread handle not inheritable
