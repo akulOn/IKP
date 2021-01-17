@@ -221,8 +221,6 @@ bool InitializeWindowsSockets()
 
 void RegisterProcess(SOCKET connectSocket, int i)
 {
-	char messageBuffer[DEFAULT_BUFLEN];
-
 	// Send an prepared message with null terminator included
 	int iResult = send(connectSocket, (char*)&i, sizeof(i), 0);
 
@@ -238,17 +236,18 @@ void RegisterProcess(SOCKET connectSocket, int i)
 
 void SendData(SOCKET connectSocket, char* i)
 {
-	char messageBuffer[DEFAULT_BUFLEN];
-
 	// Send an prepared message with null terminator included
-	int iResult = send(connectSocket, i, (int)strlen(i), 0);
-
-	if (iResult == SOCKET_ERROR)
+	for (int j = 0; j < 1001; j++)
 	{
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(connectSocket);
-		WSACleanup();
-		return;
+		int iResult = send(connectSocket, i, (int)strlen(i), 0);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(connectSocket);
+			WSACleanup();
+			return;
+		}
 	}
 }
 

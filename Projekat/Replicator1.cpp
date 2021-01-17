@@ -204,7 +204,7 @@ int main()
 		processAdd[numberOfClients] = InitProcess(Id, acceptedSocket[numberOfClients]);
 
 		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd[numberOfClients], 0, &funId[numberOfClients]);
-		CloseHandle(handle[numberOfClients]);
+		//CloseHandle(handle[numberOfClients]);
 
 		numberOfClients++;
 
