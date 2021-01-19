@@ -197,17 +197,17 @@ int main()
 
 		//POKRETANJE NITI ZA SVAKOG KLIJENTA(PROCES)
 
-		DWORD funId[10];
-		HANDLE handle[10];
+		DWORD funId;
+		HANDLE handle;
 
-		PROCESS processAdd[10];
+		PROCESS processAdd;
 		GUID Id;
 
 		CoCreateGuid(&Id);
-		processAdd[numberOfClients] = InitProcess(Id, acceptedSocket[numberOfClients]);
+		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
 
-		handle[numberOfClients] = CreateThread(NULL, 0, &handleSocket, &processAdd[numberOfClients], 0, &funId[numberOfClients]);
-		CloseHandle(handle[numberOfClients]);
+		handle = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId);
+		//CloseHandle(handle);
 
 		numberOfClients++;
 
@@ -248,7 +248,7 @@ bool InitializeWindowsSockets()
 DWORD WINAPI handleSocket(LPVOID lpParam)
 {
 	PROCESS* process = (PROCESS*)lpParam;
-	SOCKET acceptedSocket = process->acceptedSocket;
+	SOCKET acceptedSocket = *process->acceptedSocket;
 	GUID Id = process->processId;
 	int iResult;
 	char recvbuf[512];
@@ -557,7 +557,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 DWORD WINAPI handleData(LPVOID lpParam)
 {
 	PROCESS* process = (PROCESS*)lpParam;
-	SOCKET acceptedSocket = process->acceptedSocket;
+	SOCKET acceptedSocket = *process->acceptedSocket;
 	GUID Id = process->processId;
 
 	int iResult;

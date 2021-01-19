@@ -6,7 +6,7 @@
 typedef struct process_st
 {
 	GUID processId;
-	SOCKET acceptedSocket;
+	SOCKET* acceptedSocket;
 }PROCESS;
 
 typedef struct node_st_replicator

@@ -135,7 +135,7 @@ PROCESS InitProcess(GUID processId, SOCKET acceptedSocket)
 {
 	PROCESS p;
 	p.processId = processId;
-	p.acceptedSocket = acceptedSocket;
+	p.acceptedSocket = &acceptedSocket;
 
 	return p;
 }
