@@ -203,7 +203,7 @@ int main()
 		CoCreateGuid(&Id);
 		processAdd = InitProcess(Id, acceptedSocket[numberOfClients]);
 
-		handle = CreateThread(NULL, 0, &handleSocket, &acceptedSocket[numberOfClients], 0, &funId);
+		handle = CreateThread(NULL, 0, &handleSocket, &processAdd, 0, &funId);
 		//CloseHandle(handle);
 
 		numberOfClients++;
@@ -448,7 +448,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 				{
 					GUID guid = stringToGUID(&recvbuf[1]);
 
-					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
+					PROCESS processInfo = InitProcess(guid, INVALID_SOCKET); // lose resenje
 					PROCESS* process = &processInfo;
 
 					DATA data;                           // lose resenje

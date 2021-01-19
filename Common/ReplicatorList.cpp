@@ -102,7 +102,7 @@ bool IsSocketNull(NODE_REPLICATOR** head)
 
 	while (tempNode != NULL)
 	{
-		if (tempNode->process.acceptedSocket == NULL)
+		if (*tempNode->process.acceptedSocket == INVALID_SOCKET)
 			return true;
 
 		tempNode = tempNode->next;

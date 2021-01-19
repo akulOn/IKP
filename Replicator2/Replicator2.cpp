@@ -215,7 +215,7 @@ int main()
 
 	closesocket(listenSocket);
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < numberOfClients; i++)
 	{
 		iResult = shutdown(acceptedSocket[i], SD_SEND);
 		if (iResult == SOCKET_ERROR)
@@ -451,7 +451,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 				{
 					GUID guid = stringToGUID(&recvbuf[1]);
 
-					PROCESS processInfo = InitProcess(guid, NULL); // lose resenje
+					PROCESS processInfo = InitProcess(guid, INVALID_SOCKET); // lose resenje
 					PROCESS* process = &processInfo;
 
 					DATA data;                           // lose resenje
