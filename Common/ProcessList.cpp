@@ -10,7 +10,9 @@ CRITICAL_SECTION csProcess;
 
 void InitProcessList(NODE_PROCESS**head)
 {
-	InitializeCriticalSection(&csProcess);
+	InitializeCriticalSectionAndSpinCount(&csProcess, 0x80000400);
+
+	//InitializeCriticalSection(&csProcess);
 	EnterCriticalSection(&csProcess);
 	*head = NULL;
 	LeaveCriticalSection(&csProcess);

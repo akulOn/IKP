@@ -14,7 +14,8 @@ bool Contains(NODE_REPLICATOR** head, PROCESS process);
 
 void InitReplicatorList(NODE_REPLICATOR** head)
 {
-	InitializeCriticalSection(&csReplicator);
+	//InitializeCriticalSection(&csReplicator);
+	InitializeCriticalSectionAndSpinCount(&csReplicator, 0x80000400);
 	EnterCriticalSection(&csReplicator);
 	*head = NULL;
 	LeaveCriticalSection(&csReplicator);
@@ -57,7 +58,9 @@ void PrintAllProcesses(NODE_REPLICATOR** head)
 	{
 		printf("ID: {" GUID_FORMAT "}\n", GUID_ARG(tempNode->process.processId));
 
+		EnterCriticalSection(&csReplicator);
 		tempNode = tempNode->next;
+		LeaveCriticalSection(&csReplicator);
 	}
 	printf("\n");
 }
@@ -71,7 +74,9 @@ bool Contains(NODE_REPLICATOR** head, PROCESS process)
 		if (tempNode->process.processId == process.processId)
 			return true;
 
+		EnterCriticalSection(&csReplicator);
 		tempNode = tempNode->next;
+		LeaveCriticalSection(&csReplicator);
 	}
 	return false;
 }
@@ -91,7 +96,9 @@ bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process)
 			LeaveCriticalSection(&csReplicator);
 			return true;
 		}
+		EnterCriticalSection(&csReplicator);
 		tempNode = tempNode->next;
+		LeaveCriticalSection(&csReplicator);
 	}
 	return false;
 }
@@ -105,7 +112,9 @@ bool IsSocketNull(NODE_REPLICATOR** head)
 		if (tempNode->process.acceptedSocket == NULL)
 			return true;
 
+		EnterCriticalSection(&csReplicator);
 		tempNode = tempNode->next;
+		LeaveCriticalSection(&csReplicator);
 	}
 	return false;
 }
@@ -122,11 +131,12 @@ bool FindProcess(NODE_REPLICATOR** head, PROCESS** process, GUID guid)
 			EnterCriticalSection(&csReplicator);
 			tempProcess->acceptedSocket = tempNode->process.acceptedSocket;
 			tempProcess->processId = tempNode->process.processId;
-			EnterCriticalSection(&csReplicator);
+			LeaveCriticalSection(&csReplicator);
 			return true;
 		}
-
+		EnterCriticalSection(&csReplicator);
 		tempNode = tempNode->next;
+		LeaveCriticalSection(&csReplicator);
 	}
 	return false;
 }
