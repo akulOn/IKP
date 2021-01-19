@@ -245,12 +245,12 @@ bool InitializeWindowsSockets()
 DWORD WINAPI handleSocket(LPVOID lpParam)
 {
 	PROCESS* process = (PROCESS*)lpParam;
-	SOCKET acceptedSocket = *process->acceptedSocket;
+	SOCKET acceptedSocket = process->acceptedSocket;
 	GUID Id = process->processId;
 	int iResult;
 	char recvbuf[512];
 
-	if (IsSocketNull(&head))
+	if (IsSocketNull(head))
 	{
 		*process = InitProcess(Id, acceptedSocket);
 		AddSocketToID(&head, &process);
@@ -574,7 +574,7 @@ DWORD WINAPI handleConnectSocket(LPVOID lpParam)
 DWORD WINAPI handleData(LPVOID lpParam)
 {
 	PROCESS* process = (PROCESS*)lpParam;
-	SOCKET acceptedSocket = *process->acceptedSocket;
+	SOCKET acceptedSocket = process->acceptedSocket;
 	GUID Id = process->processId;
 
 	int iResult;

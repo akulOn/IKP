@@ -6,7 +6,7 @@
 typedef struct process_st
 {
 	GUID processId;
-	SOCKET* acceptedSocket;
+	SOCKET acceptedSocket;
 }PROCESS;
 
 typedef struct node_st_replicator
@@ -25,7 +25,7 @@ bool Contains(NODE_REPLICATOR** head, PROCESS process);
 
 bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process);
 
-bool IsSocketNull(NODE_REPLICATOR** head);
+bool IsSocketNull(NODE_REPLICATOR* head);
 
 bool FindProcess(NODE_REPLICATOR** head, PROCESS** process, GUID guid);
 

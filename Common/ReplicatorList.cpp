@@ -96,13 +96,13 @@ bool AddSocketToID(NODE_REPLICATOR** head, PROCESS** process)
 	return false;
 }
 
-bool IsSocketNull(NODE_REPLICATOR** head)
+bool IsSocketNull(NODE_REPLICATOR* head)
 {
-	NODE_REPLICATOR* tempNode = *head;
+	NODE_REPLICATOR* tempNode = head;
 
 	while (tempNode != NULL)
 	{
-		if (*tempNode->process.acceptedSocket == INVALID_SOCKET)
+		if (tempNode->process.acceptedSocket == 0)
 			return true;
 
 		tempNode = tempNode->next;
@@ -135,7 +135,7 @@ PROCESS InitProcess(GUID processId, SOCKET acceptedSocket)
 {
 	PROCESS p;
 	p.processId = processId;
-	p.acceptedSocket = &acceptedSocket;
+	p.acceptedSocket = acceptedSocket;
 
 	return p;
 }
